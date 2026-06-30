@@ -1,0 +1,106 @@
+---
+name: Quality Assurance
+on:
+  push:
+    branches: ['main']
+  pull_request: ~
+
+jobs:
+  tests:
+    name: Tests on ${{ matrix.php }} ${{ matrix.composer-flags }}
+    runs-on: ubuntu-latest
+    services:
+      opensearch:
+        image: opensearchproject/opensearch:2
+        env:
+          discovery.type: single-node
+          DISABLE_SECURITY_PLUGIN: 'true'
+          OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+        ports:
+          - 9200:9200
+        options: >-
+          --health-cmd "curl -fsS http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    strategy:
+      matrix:
+        php: ['8.5']
+        composer-flags: ['']
+    env:
+      OPENSEARCH_HOST: 127.0.0.1:9200
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: pcov
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress ${{ matrix.composer-flags }}
+      - name: Wait for OpenSearch
+        run: curl --fail --retry 12 --retry-delay 5 --retry-connrefused http://127.0.0.1:9200/_cluster/health
+      - name: Run tests with coverage
+        run: vendor/bin/pest --coverage --min=80
+
+  phpstan:
+    name: PHPStan on ${{ matrix.php }} ${{ matrix.composer-flags }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.5']
+        composer-flags: ['']
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress ${{ matrix.composer-flags }}
+      - name: Run static analysis
+        run: vendor/bin/phpstan
+
+  ecs:
+    name: Code Style on ${{ matrix.php }} ${{ matrix.composer-flags }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.5']
+        composer-flags: ['']
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress ${{ matrix.composer-flags }}
+      - name: Check code style
+        run: vendor/bin/ecs check
+
+  rector:
+    name: Rector on ${{ matrix.php }} ${{ matrix.composer-flags }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.5']
+        composer-flags: ['']
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-progress ${{ matrix.composer-flags }}
+      - name: Run Rector checks
+        run: vendor/bin/rector --dry-run
