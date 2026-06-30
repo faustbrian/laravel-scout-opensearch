@@ -1,0 +1,77 @@
+{
+    "name": "cline/laravel-scout-opensearch",
+    "description": "Laravel Scout custom engine for OpenSearch",
+    "license": "MIT",
+    "keywords": [
+        "php"
+    ],
+    "authors": [
+        {
+            "name": "Brian Faust",
+            "email": "brian@cline.sh"
+        }
+    ],
+    "require": {
+        "php": "^8.5.0",
+        "ext-json": "*",
+        "laravel/scout": "^11.0 || ^12.0",
+        "opensearch-project/opensearch-php": "^2.4"
+    },
+    "require-dev": {
+        "cline/coding-standard": "^4.0.0",
+        "ergebnis/composer-normalize": "^2.50.0",
+        "larastan/larastan": "^3.7",
+        "mockery/mockery": "^1.6.12",
+        "orchestra/testbench": "^10.9",
+        "pestphp/pest": "^4.4.1",
+        "pestphp/pest-plugin-laravel": "^4.1",
+        "pestphp/pest-plugin-type-coverage": "^4.0.3",
+        "php-http/discovery": "^1.20",
+        "phpstan/phpstan-mockery": "^2.0",
+        "react/promise": "^3.3",
+        "symfony/var-dumper": "^7.4.6 || ^8.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Cline\\LaravelScout\\OpenSearch\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Cline\\LaravelScout\\OpenSearch\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Cline\\LaravelScout\\OpenSearch\\OpenSearchServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "lint": "vendor/bin/ecs check --fix",
+        "refactor": "rector",
+        "test": [
+            "@test:lint",
+            "@test:type-coverage",
+            "@test:unit",
+            "@test:types",
+            "@test:refactor"
+        ],
+        "test:lint": "vendor/bin/ecs check",
+        "test:refactor": "rector --dry-run",
+        "test:type-coverage": "pest --parallel --min=80 --type-coverage",
+        "test:types": "phpstan",
+        "test:unit": "pest --parallel --min=80 --coverage"
+    }
+}
